@@ -3,9 +3,14 @@ name: Do stuff on releases
 on:
   release:
     types:
-      - released
       - published
       - edited
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Tag to build'
+        required: true
+        type: string
 
 jobs:
   echo-everything:
@@ -18,4 +23,5 @@ jobs:
       - name: "Echo environment"
         run: |
           echo "Release triggered workflow"
+          echo The tags are ${{ inputs.tags }}
           env
