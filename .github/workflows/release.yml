@@ -50,7 +50,7 @@ jobs:
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           tags: |
-            type=semver,pattern=v{{version}}
+            type=semver,pattern={{version}}
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Print Docker tags and labels
