@@ -18,11 +18,11 @@ jobs:
 
     steps:
       - name: Checkout repository
-        if: ${{ ! inputs.print_tag }}
+        if: ${{ ! inputs.tag }}
         uses: actions/checkout@v3
 
       - name: Checkout repository at tag
-        if: ${{ inputs.print_tags }}
+        if: ${{ inputs.tag }}
         uses: actions/checkout@v3
         with:
           ref: ${{ inputs.tag }}
