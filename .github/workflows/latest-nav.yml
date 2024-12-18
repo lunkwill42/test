@@ -1,0 +1,19 @@
+name: Find latest NAV debian package
+on: [workflow_dispatch]
+
+jobs:
+  getversion:
+    name: "Get latest version of NAV package"
+    runs-on: ubuntu-latest
+
+  steps:
+    - name: Add repository
+      run: |
+        sudo mkdir -p --mode=0755 /etc/apt/keyrings
+        curl -fsSL https://nav.uninett.no/debian/gpg | sudo gpg --dearmor -o /etc/apt.keyrings/nav.gpg
+        echo 'deb [signed-by=/etc/apt/keyrings/nav.gpg] https://nav.uninett.no/debian bullseye nav' | sudo tee /etc/apt/sources.list.d/nav.list
+        sudo apt-get update
+
+    - name: Get list of NAV packages
+      run: |
+        apt-cache policy nav
