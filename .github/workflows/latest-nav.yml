@@ -5,20 +5,22 @@ jobs:
   getversion:
     name: "Get latest version of NAV package"
     runs-on: ubuntu-latest
+    env:
+      PREFERRED_DISTRO: bullseye
 
     steps:
       - name: Add NAV APT repository
         run: |
           sudo mkdir -p --mode=0755 /etc/apt/keyrings
           curl -fsSL https://nav.uninett.no/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/nav.gpg
-          echo 'deb [signed-by=/etc/apt/keyrings/nav.gpg] https://nav.uninett.no/debian bullseye nav' | sudo tee /etc/apt/sources.list.d/nav.list
+          echo "deb [signed-by=/etc/apt/keyrings/nav.gpg] https://nav.uninett.no/debian ${PREFERRED_DISTRO} nav" | sudo tee /etc/apt/sources.list.d/nav.list
           sudo apt-get update
 
       - name: Get latest NAV version
         id: package
         run: |
           VERSION=$(apt-cache policy nav | awk -F ': ' '/Candidate/ {print $2}')
-          echo "latest=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Get latest navappliance release
         id: appliance
@@ -28,19 +30,14 @@ jobs:
           latest_release=$(gh api repos/Uninett/navappliance/releases/latest)
           echo "$latest_release" > latest_release.json
           cat latest_release.json
-          
-          # Extract specific fields from the JSON response
-          tag_name=$(jq -r .tag_name latest_release.json)
-          release_name=$(jq -r .name latest_release.json)
-          release_body=$(jq -r .body latest_release.json)
 
-          # Set outputs
-          echo "tag_name=$tag_name" >> $GITHUB_OUTPUT
-          echo "release_name=$release_name" >> $GITHUB_OUTPUT
-          echo "release_body=$release_body" >> $GITHUB_OUTPUT
+          version=$(jq -r .tag_name latest_release.json | sed s/^v//)
+          echo "version=$version" >> $GITHUB_OUTPUT
 
-      - name: Print Latest Release Info
+      - name: Verify update available
         run: |
-          echo "Latest release tag: ${{ steps.appliance.outputs.tag_name }}"
-          echo "Latest release name: ${{ steps.appliance.outputs.release_name }}"
-          echo "Latest release body: ${{ steps.appliance.outputs.release_body }}"
+          if dpkg --compare-versions ${{ steps.package.outputs.version }} gt ${{ steps.appliance.outputs.version }}; then
+              echo "There is a newer package available in the APT repository"
+          else
+              echo "There is no newer package available in the APT repository"
+          fi
